@@ -59,9 +59,18 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+## node modules install (if you delete node_module & package-lock.json)
+
+```bash
+$ npm install 
+# or,
+$ npm i
+```
+
 visit: http://localhost:3000/
 ## Short key
 ctrl + c # stop / back to old path
+---
 
 ## Deployment
 
