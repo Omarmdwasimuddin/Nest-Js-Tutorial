@@ -97,6 +97,4 @@ $ npm run test:cov
 ```
 visit: http://localhost:3000/
 ## Short key
-```bash
-- ctrl + c # stop / back to old path
-```
+ctrl + c # stop / back to old path
