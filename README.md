@@ -65,11 +65,18 @@ $ npm install
 # or,
 $ npm i
 ```
-
-visit: http://localhost:3000/
-## Short key
-ctrl + c # stop / back to old path
 ---
+Access Application
+Visit: http://localhost:3000/ 
+
+Keyboard Shortcuts
+Ctrl + C - Stop running process / Return to previous path
+---
+## create controller
+```bash
+$ nest g controller [name]
+```
+https:///public/img/createcontroller.png
 
 ## Deployment
 
@@ -84,8 +91,3 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 ---
-## create controller
-```bash
-$ nest g controller [name]
-```
-![installation img](/public/img/createcontroller.png)
