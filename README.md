@@ -32,7 +32,7 @@ $ npm i -g @nestjs/cli
 # nest project installation
 $ nest new project-name
 ```
-![installation img]()
+![installation img](/public/img/InstallNestjs.png)
 
 ## Compile and run the project
 
@@ -60,7 +60,6 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 ## node modules install (if you delete node_module & package-lock.json)
-
 ```bash
 $ npm install 
 # or,
@@ -84,3 +83,9 @@ $ mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
+## create controller
+```bash
+$ nest g controller [name]
+```
+![installation img](/public/img/createcontroller.png)
