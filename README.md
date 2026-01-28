@@ -68,8 +68,8 @@ $ npm i
 ---
 Access Application
 Visit: http://localhost:3000/ 
----
-Keyboard Shortcuts
+
+#### Keyboard Shortcuts
 Ctrl + C - Stop running process / Return to previous path
 ---
 ## create controller
