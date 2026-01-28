@@ -72,11 +72,11 @@ Visit: http://localhost:3000/
 #### Keyboard Shortcuts
 Ctrl + C - Stop running process / Return to previous path
 ---
-## create controller
+## Topic 01: create controller
 ```bash
 $ nest g controller [name]
 ```
-![installation img](/public/img/createcontroller.png)
+![create controller](/public/img/createcontroller.png)
 
 ```bash
 # user.controller.spec.ts
@@ -108,7 +108,21 @@ export class UserController {
 
 }
 ```
+---
+```bash
+# user.controller.ts
+import { Controller, Get } from '@nestjs/common';
 
+@Controller('user')  //Decorator
+export class UserController {
+    @Get()
+    getUser(){
+        return 'User data fetched successfully!'
+    }
+}
+```
+![output view](/public/img/output-view.png)
+---
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
