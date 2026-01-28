@@ -124,6 +124,125 @@ export class UserController {
 Output View
 ![output view](/public/img/output-view.png)
 ---
+
+## Topic 02: create service
+```bash
+$ nest g service [name]
+# Or,
+$ nest g s [name]
+```
+---
+![create service](/public/img/createservice.png)
+
+```bash
+# product.service.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { ProductService } from './product.service';
+
+describe('ProductService', () => {
+  let service: ProductService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [ProductService],
+    }).compile();
+
+    service = module.get<ProductService>(ProductService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+});
+```
+```bash
+# product.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ProductService {}
+```
+---
+```bash
+# product.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ProductService {
+    private products = [
+        {id: 1, name:"Mobile", price: 15000},
+        {id: 2, name:"Laptop", price: 80000},
+        {id: 3, name:"Tablet", price: 19000},
+        {id: 4, name:"SSD", price: 12000},
+        {id: 5, name:"DHR Camera", price: 27000},
+    ];
+    getAllProducts(){
+        return this.products;
+    }
+    getProductById(id: number){
+        return this.products.find((product) => product.id === id)
+    }
+}
+```
+---
+```bash
+# create product controller
+$ nest g controller product
+```
+![product controller](/public/img/productcontroller.png)
+```bash
+# product.controller.spac.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { ProductController } from './product.controller';
+
+describe('ProductController', () => {
+  let controller: ProductController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ProductController],
+    }).compile();
+
+    controller = module.get<ProductController>(ProductController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});
+```
+---
+```bash
+# product.controller.ts
+import { Controller } from '@nestjs/common';
+
+@Controller('product')
+export class ProductController {}
+```
+---
+```bash
+# product.controller.ts
+import { Controller, Param, Get } from '@nestjs/common';
+import { ProductService } from './product.service';
+
+@Controller('product')
+export class ProductController {
+    constructor(private readonly productService: ProductService){}
+        @Get()
+        getProducts(){
+            return this.productService.getAllProducts();
+        }
+        @Get(':id')
+        getProduct(@Param('id') id:string){
+            return this.productService.getProductById(Number(id))
+        }
+    
+}
+```
+---
+Output View
+![product output](/public/img/output-view2.png)
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
