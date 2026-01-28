@@ -68,7 +68,7 @@ $ npm i
 ---
 Access Application
 Visit: http://localhost:3000/ 
-
+---
 Keyboard Shortcuts
 Ctrl + C - Stop running process / Return to previous path
 ---
@@ -76,7 +76,7 @@ Ctrl + C - Stop running process / Return to previous path
 ```bash
 $ nest g controller [name]
 ```
-https:///public/img/createcontroller.png
+![installation img](/public/img/createcontroller.png)
 
 ## Deployment
 
