@@ -121,6 +121,7 @@ export class UserController {
     }
 }
 ```
+Output View
 ![output view](/public/img/output-view.png)
 ---
 ## Deployment
