@@ -121,7 +121,7 @@ export class UserController {
     }
 }
 ```
-Output View
+#### Output View
 ![output view](/public/img/output-view.png)
 ---
 
@@ -240,17 +240,91 @@ export class ProductController {
 }
 ```
 ---
-Output View
+#### Output View
 ![product output](/public/img/output-view2.png)
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Topic 03: module
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# create module
+$ nest g module [name]
 ```
 ---
+![create module](/public/img/createmodule.png)
+
+```bash
+#employee.module.ts
+import { Module } from '@nestjs/common';
+
+@Module({})
+export class EmployeeModule {}
+```
+---
+```bash
+# create service
+$ nest g service employee
+```
+```bash
+# create controller
+$ nest g controller employee
+```
+---
+![create service & controller](/public/img/createservice&controller.png)
+
+```bash
+# employee.controller.ts
+import { Controller, Get } from '@nestjs/common';
+
+@Controller('employee')
+export class EmployeeController {
+    @Get()
+        getEmployee(){
+            return 'Employee data fetched successfully!!'
+        }
+}
+```
+---
+#### Output View
+![output view](/public/img/output-view3.png)
+
+```bash
+# employee.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class EmployeeService {
+    private employees = [
+        {id: 1101, name: 'Wasim', post: 'Software Engineer'},
+        {id: 1102, name: 'Ismail', post: 'DevOps Engineer'},
+        {id: 1103, name: 'Pranto', post: 'Network Engineer'},
+        {id: 1104, name: 'Omar', post: 'T. Manager'},
+    ];
+    getAllEmployees(){
+        return this.employees;
+    }
+    getEmployeeById(id: number){
+        return this.employees.find((employee) => employee.id === id)
+    }
+}
+```
+```bash
+# employee.controller.ts
+import { Controller, Get, Param } from '@nestjs/common';
+import { EmployeeService } from './employee.service';
+
+@Controller('employee')
+export class EmployeeController {
+    constructor(private readonly employeeService: EmployeeService){}
+    @Get()
+        getEmployees(){
+            return this.employeeService.getAllEmployees();
+        }
+    @Get(':id')
+        getEmployee(@Param('id') id:string){
+            return this.employeeService.getEmployeeById(Number(id))
+        }
+}
+```
+---
+#### Output View
+![output view](/public/img/output-view4.png)
