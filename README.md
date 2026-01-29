@@ -328,3 +328,46 @@ export class EmployeeController {
 ---
 #### Output View
 ![output view](/public/img/output-view4.png)
+
+## Topic 04: module
+
+```bash
+# create category module
+$ nest g module category
+# create service
+$ nest g service category
+# create controller
+$ nest g controller category
+```
+---
+
+```bash
+# category.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class CategoryService {
+    getCategories(){
+        return ['Mobile','Laptop','Tablet'];
+    }
+}
+```
+---
+
+```bash
+# category.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { CategoryService } from './category.service';
+
+@Controller('category')
+export class CategoryController {
+    constructor(private readonly categoryService: CategoryService){}
+    @Get()
+    getAllCategories(){
+        return this.categoryService.getCategories();
+    }
+}
+```
+---
+#### Output View
+![output view](/public/img/output-view5.png)
