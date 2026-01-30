@@ -329,7 +329,7 @@ export class EmployeeController {
 #### Output View
 ![output view](/public/img/output-view4.png)
 
-## Topic 04: module
+## Topic 04: Dependency Injection
 
 ```bash
 # create category module
@@ -371,3 +371,118 @@ export class CategoryController {
 ---
 #### Output View
 ![output view](/public/img/output-view5.png)
+
+## Topic 05: Create REST APIs
+
+```bash
+# create module
+$ nest g module student
+# create controller
+$ nest g controller student
+# create service
+$ nest g service student
+```
+---
+```bash
+# student.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+
+@Injectable()
+export class StudentService {
+    private students = [
+        { id:1, name: "Wasim", age:28 },
+        { id:2, name: "Omar", age:29 },
+    ];
+
+    getAllStudents(){
+        return this.students;
+    }
+
+    getStudentById(id: number){
+        const student = this.students.find((s) => s.id === id)
+        if(!student) throw new NotFoundException('Student not found!');
+        return student;
+    }
+
+    // POST
+    createStudent(data: {name: string; age: number}){
+        const newStudent = {
+            id: Date.now(),
+            ...data,
+        };
+        this.students.push(newStudent);
+        return newStudent;
+    }
+
+    // PUT
+    updateStudent(id: number, data:{name:string; age:number}){
+        const index = this.students.findIndex((s) => s.id === id);
+        if( index === -1 ) throw new NotFoundException('Student not found!');
+        this.students[index] = { id, ...data};
+        return this.students[index];
+    }
+
+    // PATCH
+    patchStudent(id: number, data: Partial<{ name: string; age: number}>){
+        const student = this.getStudentById(id);
+        Object.assign(student, data);
+        return student;
+    }
+
+    // DELETE
+    deleteStudent(id: number){
+        const index = this.students.findIndex((s) => s.id === id);
+        if( index === -1 ) throw new NotFoundException('Student not found!');
+        const deleted = this.students.splice(index,1)
+        return { message: 'student deleted successfully', student: deleted[0]};
+    }
+
+}
+```
+---
+
+```bash
+# student.controller.ts
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { StudentService } from './student.service';
+
+@Controller('student')
+export class StudentController {
+    constructor(private readonly studentService: StudentService){};
+
+    @Get()
+    getAll(){
+        return this.studentService.getAllStudents();
+    }
+
+    @Get(':id')
+    getOne(@Param('id') id: string){
+        return this.studentService.getStudentById(Number(id))
+    }
+
+    @Post()
+    create(@Body() data: {name: string; age: number}){
+        return this.studentService.createStudent(data);
+    }
+
+    @Put(':id')
+    update(@Param('id') id: string, @Body() data: {name: string; age: number}){
+        return this.studentService.updateStudent(Number(id), data);
+    }
+
+    @Patch(':id')
+    patch(@Param('id') id: string, @Body() data: Partial<{name: string; age: number}>){
+        return this.studentService.patchStudent(Number(id), data);
+    }
+
+    @Delete(':id')
+    delete(@Param('id') id: string){
+        return this.studentService.deleteStudent(Number(id));
+    }
+}
+```
+---
+
+#### Output View
+- for GET method
+![Read](/public/img/output-view6.png)
