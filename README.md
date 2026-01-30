@@ -496,3 +496,94 @@ export class StudentController {
 ![Read](/public/img/output-view10.png)
 - DELETE method
 ![Read](/public/img/output-view11.png)
+
+
+## Topic 06: Data Transfer Object (DTO) & Interfaces
+
+```bash
+# create module
+$ nest g module customer
+# create controller
+$ nest g controller customer
+# create service
+$ nest g service customer
+```
+---
+```bash
+#create dto & interfaces folder
+```
+![folder create](/public/img/folder.png)
+![folder create](/public/img/folder2.png)
+
+```bash
+# customer.interface.ts
+export interface Customer{
+    id: number;
+    name: string;
+    age: number;
+}
+```
+---
+```bash
+# create-customer.dto.ts
+export class CreateCustomerDto {
+    name: string;
+    age: number;
+}
+```
+---
+```bash
+# customer.service.ts
+import { Injectable } from '@nestjs/common';
+import { Customer } from './interfaces/customer.interface';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+
+@Injectable()
+export class CustomerService {
+    private customers: Customer[] = [];
+
+    getAllCustomers(): Customer[] {
+        return this.customers;
+    }
+
+    addCustomer(createCustomerDto: CreateCustomerDto): Customer {
+        const newCustomer: Customer = {
+            id: Date.now(),
+            ...createCustomerDto
+        };
+        this.customers.push(newCustomer);
+        return newCustomer;
+    }
+
+}
+```
+---
+```bash
+# customer.controller.ts
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { CustomerService } from './customer.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+
+@Controller('customer')
+export class CustomerController {
+    constructor(private readonly customerService: CustomerService) {};
+
+    @Get()
+    getCustomers(){
+        return this.customerService.getAllCustomers();
+    }
+
+    @Post()
+    addCustomer(@Body() createCustomerDto: CreateCustomerDto) {
+        return this.customerService.addCustomer(createCustomerDto);
+    }
+
+}
+```
+---
+
+#### Output View
+-GET
+![get](/public/img/output-view13.png)
+-POST
+![post](/public/img/output-view12.png)
