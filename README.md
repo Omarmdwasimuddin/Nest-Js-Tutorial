@@ -583,7 +583,7 @@ export class CustomerController {
 ---
 
 #### Output View
--GET
+- GET
 ![get](/public/img/output-view13.png)
--POST
+- POST
 ![post](/public/img/output-view12.png)
