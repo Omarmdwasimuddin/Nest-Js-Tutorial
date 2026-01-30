@@ -484,5 +484,15 @@ export class StudentController {
 ---
 
 #### Output View
-- for GET method
+- GET method
 ![Read](/public/img/output-view6.png)
+- GET method with id
+![Read](/public/img/output-view7.png)
+- POST method 
+![Read](/public/img/output-view8.png)
+- PUT method
+![Read](/public/img/output-view9.png)
+- PATCH method
+![Read](/public/img/output-view10.png)
+- DELETE method
+![Read](/public/img/output-view11.png)
