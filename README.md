@@ -587,3 +587,9 @@ export class CustomerController {
 ![get](/public/img/output-view13.png)
 - POST
 ![post](/public/img/output-view12.png)
+
+
+## Topic 07: Validate DTOs Using class-validator & class-transformer
+
+![create-customer.dto.ts file](/public/img/dto-file.png)
+![postman](/public/img/validation.png)
