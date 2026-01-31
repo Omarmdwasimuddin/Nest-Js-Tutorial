@@ -593,3 +593,43 @@ export class CustomerController {
 
 ![create-customer.dto.ts file](/public/img/dto-file.png)
 ![postman](/public/img/validation.png)
+
+```bash
+# Validate command
+$ npm i class-validator class-transformer
+```
+---
+
+```bash
+# create-customer.dto.ts
+import { IsInt, IsString } from "class-validator";
+
+export class CreateCustomerDto {
+    @IsString()
+    name: string;
+    @IsInt()
+    age: number;
+}
+```
+---
+```bash
+# main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();
+```
+---
+
+![extra field not working](/public/img/extrafield.png)
