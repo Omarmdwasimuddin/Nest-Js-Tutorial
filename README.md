@@ -801,6 +801,7 @@ export class ProductController {
 }
 ```
 ---
+###### Note: Headers e token set na kore dile value show hobe na
 ![output](/public/img/output-view16.png)
 
 ###### Note: Headers e token set kore dite hobe tai Headers e Authorization e Bearer my-secret-token diye dibo
