@@ -633,3 +633,83 @@ bootstrap();
 ---
 
 ![extra field not working](/public/img/extrafield.png)
+
+
+## Topic 08: Create & Use Custom Pipes
+
+```bash
+# create pipes
+$ nest g pipe [name]
+```
+---
+```bash
+# create pipes with folder
+$ nest g pipe common/pipes/uppercase
+```
+---
+
+![file folder](/public/img/filefolder.png)
+
+```bash
+# uppercase.pipe.spec.ts 
+import { UppercasePipe } from './uppercase.pipe';
+
+describe('UppercasePipe', () => {
+  it('should be defined', () => {
+    expect(new UppercasePipe()).toBeDefined();
+  });
+});
+```
+---
+
+```bash
+# uppercase.pipe.ts 
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+
+@Injectable()
+export class UppercasePipe implements PipeTransform {
+  transform(value: any, metadata: ArgumentMetadata) {
+    return value;
+  }
+}
+```
+---
+
+```bash
+# uppercase.pipe.ts
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+
+@Injectable()
+export class UppercasePipe implements PipeTransform {
+  transform(value: any, metadata: ArgumentMetadata) {
+    if (typeof value === 'string') {
+      return value.toUpperCase();
+    }
+    return value;
+  }
+}
+```
+
+```bash
+# create controller
+$ nest g controller myname
+```
+---
+
+```bash
+# myname.controller.ts
+import { Body, Controller, Post } from '@nestjs/common';
+import { UppercasePipe } from 'src/common/pipes/uppercase/uppercase.pipe';
+
+@Controller('myname')
+export class MynameController {
+    @Post('custom')
+    transformName(@Body('name', new UppercasePipe()) name: string) {
+        return { message: `Hello ${name}!` };
+    }
+}
+```
+---
+###### Note: Headers e Content-Type application/json add korte hobe
+![output view](/public/img/output-view14.png)
+![output view](/public/img/output-view15.png)
