@@ -59,7 +59,7 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-## node modules install (if you delete node_module & package-lock.json)
+###### Note: node modules install (if you delete node_module & package-lock.json)
 ```bash
 $ npm install 
 # or,
@@ -70,7 +70,7 @@ Access Application
 Visit: http://localhost:3000/ 
 
 #### Keyboard Shortcuts
-Ctrl + C - Stop running process / Return to previous path
+###### Ctrl + C - Stop running process / Return to previous path
 ---
 ## Topic 01: create controller
 ```bash
@@ -713,3 +713,96 @@ export class MynameController {
 ###### Note: Headers e Content-Type application/json add korte hobe
 ![output view](/public/img/output-view14.png)
 ![output view](/public/img/output-view15.png)
+
+
+## Topic 09: How to Protect Routes using Guards
+
+```bash
+# create guard
+$ nest g guard [name]
+```
+---
+```bash
+# create guard with folder
+$ nest g guard guards/auth
+```
+---
+![guard folder](/public/img/guardfolder.png)
+
+```bash
+# auth.guard.spec.ts
+import { AuthGuard } from './auth.guard';
+
+describe('AuthGuard', () => {
+  it('should be defined', () => {
+    expect(new AuthGuard()).toBeDefined();
+  });
+});
+```
+---
+
+```bash
+# auth.guard.ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return true;
+  }
+}
+```
+---
+
+```bash
+# auth.guard.ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+
+    return authHeader === 'Bearer my-secret-token'
+  }
+}
+```
+---
+ 
+###### Note: product path e AuthGuard setup
+
+```bash
+# product.controller.ts
+import { Controller, Param, Get, UseGuards } from '@nestjs/common';
+import { ProductService } from './product.service';
+import { AuthGuard } from 'src/guards/auth/auth.guard';
+
+@Controller('product')
+export class ProductController {
+    constructor(private readonly productService: ProductService){}
+        @Get()
+        @UseGuards(AuthGuard)
+        getProducts(){
+            return this.productService.getAllProducts();
+        }
+        @Get(':id')
+        getProduct(@Param('id') id:string){
+            return this.productService.getProductById(Number(id))
+        }
+    
+}
+```
+---
+![output](/public/img/output-view16.png)
+
+###### Note: Headers e token set kore dite hobe tai Headers e Authorization e Bearer my-secret-token diye dibo
+
+![output](/public/img/output-view17.png)
