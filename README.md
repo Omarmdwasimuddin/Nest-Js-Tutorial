@@ -807,3 +807,133 @@ export class ProductController {
 ###### Note: Headers e token set kore dite hobe tai Headers e Authorization e Bearer my-secret-token diye dibo
 
 ![output](/public/img/output-view17.png)
+
+
+## Topic 10: Role-Based Authorization
+
+```bash
+# create guard
+$ nest g guard [name]
+# create guard with path
+$ nest g guard guards/roles
+```
+---
+![folder](/public/img/guardfolderrole.png)
+
+```bash
+# roles.guard.spec.ts
+import { RolesGuard } from './roles.guard';
+
+describe('RolesGuard', () => {
+  it('should be defined', () => {
+    expect(new RolesGuard()).toBeDefined();
+  });
+});
+```
+---
+```bash
+# roles.guard.ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return true;
+  }
+}
+```
+---
+
+###### Note: Add file- roles.decorator.ts & roles.enums.ts 
+![add newfile](/public/img/fileadd.png)
+
+```bash
+# roles.decorator.ts
+// Custom decorator
+import { SetMetadata } from "@nestjs/common";
+
+export const ROLES_KEY = 'roles';
+
+export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
+```
+---
+
+```bash
+# roles.enums.ts
+export enum Role {
+    User = 'user',
+    Admin = 'admin'
+}
+```
+---
+
+```bash
+# roles.guard.ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Observable } from 'rxjs';
+import { Role } from './roles.enums';
+import { ROLES_KEY } from './roles.decorator';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+
+  constructor(private reflector: Reflector) {}
+
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    
+    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(
+      ROLES_KEY,[
+        context.getHandler(),
+        context.getClass(),
+      ]
+    );
+    if (!requiredRoles) return true;
+    const request = context.switchToHttp().getRequest<{ headers: Record<string, string>}>();
+    const userRole = request.headers['x-user-role'] as Role;
+    return requiredRoles.includes(userRole);
+  }
+}
+```
+---
+
+```bash
+# create controller
+$ nest g controller user-roles
+```
+---
+
+```bash
+# user-roles.controller.ts
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Roles } from 'src/guards/roles/roles.decorator';
+import { Role } from 'src/guards/roles/roles.enums';
+import { RolesGuard } from 'src/guards/roles/roles.guard';
+
+@Controller('user-roles')
+export class UserRolesController {
+
+    @Get('admin-data')
+    @UseGuards(RolesGuard)
+    @Roles(Role.Admin)
+    getAdminData(){
+        return { message: "Only Admins can access this data" };
+    }
+    @Get('user-data')
+    getUserData(){
+        return { message: "Any authenticated user can access this data" };
+    }
+
+}
+```
+---
+![postman](/public/img/cannotaccessanyone.png)
+###### Note: headers e x-user-role dite hobe & value dite hobe ekhane value hishabe admin ache
+![postman](/public/img/admincanaccess.png)
+###### Note: jekono user ei access korte parbe
+![postman](/public/img/anyonecanaccess.png)
