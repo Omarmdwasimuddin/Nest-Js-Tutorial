@@ -937,3 +937,87 @@ export class UserRolesController {
 ![postman](/public/img/admincanaccess.png)
 ###### Note: jekono user ei access korte parbe
 ![postman](/public/img/anyonecanaccess.png)
+
+## Topic 11:  Exception Filters
+
+```bash
+# create filter
+$ nest g filter filters/http-exception
+```
+---
+![filter folder](/public/img/exceptionfolder.png)
+
+```bash
+# http-exception.filter.spec.ts
+import { HttpExceptionFilter } from './http-exception.filter';
+
+describe('HttpExceptionFilter', () => {
+  it('should be defined', () => {
+    expect(new HttpExceptionFilter()).toBeDefined();
+  });
+});
+```
+---
+
+```bash
+# http-exception.filter.ts
+import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
+
+@Catch()
+export class HttpExceptionFilter<T> implements ExceptionFilter {
+  catch(exception: T, host: ArgumentsHost) {}
+}
+```
+---
+
+```bash
+# http-exception.filter.ts
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+import { Response, Request } from 'express';
+
+
+@Catch()
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
+
+    response.status(status).json({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message: exception.message
+    });
+  }
+}
+```
+---
+
+```bash
+# create controller
+$ nest g controller exception
+```
+---
+![exception folder](/public/img/exceptionfolder2.png)
+
+```bash
+# exception.controller.ts
+import { Controller, Get, Param, ParseIntPipe, UseFilters } from '@nestjs/common';
+import { HttpExceptionFilter } from 'src/filters/http-exception/http-exception.filter';
+
+@Controller('exception')
+@UseFilters(HttpExceptionFilter)
+export class ExceptionController {
+    @Get('hello/:id')
+    getHello(@Param('id', ParseIntPipe) id: number) {
+        return {message: `Your ID is ${id}`}
+    }
+}
+```
+---
+###### Note: id must be number dite hobe
+![output view](/public/img/output-view18.png)
+###### Note: string dile id show hobe na 
+![output view](/public/img/output-view19.png)
