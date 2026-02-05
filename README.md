@@ -1021,3 +1021,83 @@ export class ExceptionController {
 ![output view](/public/img/output-view18.png)
 ###### Note: string dile id show hobe na 
 ![output view](/public/img/output-view19.png)
+
+
+## Topic 12: Middleware
+
+```bash
+# create middleware
+$ nest g middleware middleware/logger
+```
+---
+
+```bash
+# logger.middleware.spec.ts
+import { LoggerMiddleware } from './logger.middleware';
+
+describe('LoggerMiddleware', () => {
+  it('should be defined', () => {
+    expect(new LoggerMiddleware()).toBeDefined();
+  });
+});
+```
+---
+
+```bash
+# logger.middleware.ts
+import { Injectable, NestMiddleware } from '@nestjs/common';
+
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+  use(req: any, res: any, next: () => void) {
+    next();
+  }
+}
+```
+---
+![middleware](/public/img/middleware.png)
+
+```bash
+# logger.middleware.ts
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    console.log(`Request: [${req.method}] - [${req.originalUrl}]`);
+    next();
+  }
+}
+```
+---
+
+```bash
+# app.module.ts
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserController } from './user/user.controller';
+import { ProductService } from './product/product.service';
+import { ProductController } from './product/product.controller';
+import { EmployeeModule } from './employee/employee.module';
+import { CategoryModule } from './category/category.module';
+import { StudentModule } from './student/student.module';
+import { CustomerModule } from './customer/customer.module';
+import { MynameController } from './myname/myname.controller';
+import { UserRolesController } from './user-roles/user-roles.controller';
+import { ExceptionController } from './exception/exception.controller';
+import { LoggerMiddleware } from './middleware/logger/logger.middleware';
+
+@Module({
+  imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule],
+  controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController],
+  providers: [AppService, ProductService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  } 
+}
+```
+---
