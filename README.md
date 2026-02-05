@@ -1186,3 +1186,100 @@ export class DatabaseController {
 ###### ctrl c
 ![output view](/public/img/terminal%20view.png)
 
+## Topic 14: Environment Variables
+
+```bash
+# install @nestjs/config
+$ npm i @nestjs/config
+```
+---
+###### root e .env file toiri koro
+
+```bash
+# .env
+DATABASE_URL=mongodb://localhost:500/mongodb
+JWT_SECRET=1234567
+```
+---
+
+###### Module e import koro- ConfigModule.forRoot
+```bash
+# app.module.ts
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserController } from './user/user.controller';
+import { ProductService } from './product/product.service';
+import { ProductController } from './product/product.controller';
+import { EmployeeModule } from './employee/employee.module';
+import { CategoryModule } from './category/category.module';
+import { StudentModule } from './student/student.module';
+import { CustomerModule } from './customer/customer.module';
+import { MynameController } from './myname/myname.controller';
+import { UserRolesController } from './user-roles/user-roles.controller';
+import { ExceptionController } from './exception/exception.controller';
+import { LoggerMiddleware } from './middleware/logger/logger.middleware';
+import { DatabaseService } from './database/database.service';
+import { DatabaseController } from './database/database.controller';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot({
+    isGlobal: true,
+  })],
+  controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController],
+  providers: [AppService, ProductService, DatabaseService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  } 
+}
+```
+---
+
+```bash
+# create service
+$ nest g service ev
+```
+---
+
+```bash
+# ev.service.ts
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config'
+
+@Injectable()
+export class EvService {
+    constructor(private configService: ConfigService) {}
+
+    getDbUrl() {
+        return this.configService.get<string>('DATABASE_URL');
+    }
+}
+```
+---
+
+```bash
+# create controller
+$ nest g controller ev
+```
+---
+
+
+```bash
+# ev.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { EvService } from './ev.service';
+
+@Controller('ev')
+export class EvController {
+    constructor(private readonly evService: EvService) {}
+    @Get()
+    getUrl() {
+        return this.evService.getDbUrl();
+    }
+}
+```
+---
+![env data response](/public/img/envoutput.png)
