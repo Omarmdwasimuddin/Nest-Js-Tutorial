@@ -1577,3 +1577,112 @@ export class StudentsController {
 ---
 ###### partialy data update
 ![update](/public/img/studentsupdate.png)
+###### mongodb
+![update](/public/img/mongodb2.png)
+
+
+## Topic 19: Update MongoDB Data using PATCH API, DELETE & PUT
+
+```bash
+# students.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Student, StudentDocument } from './students.schema';
+import { Model } from 'mongoose';
+
+@Injectable()
+export class StudentsService {
+    constructor(
+        @InjectModel(Student.name) private studentModel: Model<StudentDocument>
+    ) {}
+
+    async createStudent(data: Partial<Student>): Promise<Student> {
+        const newStudent = new this.studentModel(data);
+        return newStudent.save();
+    }
+
+    async getAllStudents(): Promise<Student[]> {
+        return this.studentModel.find().exec();
+    }
+
+    async getStudentById(id: string): Promise<Student | null> {
+        return this.studentModel.findById(id).exec();
+    }
+
+    // Complete update with overwrite
+    async updateStudent(id: string, data: Partial<Student>): Promise<Student | null> {
+       // return this.studentModel.findByIdAndUpdate(id, data, { new: true }).exec();
+       const update = await this.studentModel.findByIdAndUpdate(id, {
+        name: data.name ?? null,
+        age: data.age ?? null,
+        email: data.email ?? null,
+       }, { overwrite: true, new: true });
+       return update;
+    }
+
+    // Partial update
+    async patchStudent(id: string, data: Partial<Student>): Promise<Student | null> {
+        return this.studentModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+    }
+
+    async deleteStudent(id: string): Promise<Student | null> {
+        return this.studentModel.findByIdAndDelete(id).exec();
+    }
+
+}
+```
+---
+
+```bash
+# students.controller.ts
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { StudentsService } from './students.service';
+import { Student } from './students.schema';
+
+@Controller('students')
+export class StudentsController {
+    constructor(private readonly studentsService: StudentsService) {}
+
+    @Post()
+    async createStudent(@Body() data: Partial<Student>) {
+        return this.studentsService.createStudent(data);
+    }
+
+    @Get()
+    async getAllStudents() {
+        return this.studentsService.getAllStudents();
+    }
+
+    @Get(':id')
+    async getStudentById(@Param('id') id: string) {
+        return this.studentsService.getStudentById(id);
+    }
+
+    @Put(':id')
+    async updateStudent(@Param('id') id: string, @Body() data: Partial<Student>) {
+        return this.studentsService.updateStudent(id, data);
+    }
+
+    @Delete(':id')
+    async deleteStudent(@Param('id') id: string) {
+        return this.studentsService.deleteStudent(id);
+    }
+
+    @Patch(':id')
+    async patchStudent(@Param('id') id: string, @Body() data: Partial<Student>) {
+        return this.studentsService.patchStudent(id, data);
+    }
+
+}
+```
+---
+###### Partial update
+![patch](/public/img/patch.png)
+###### Partially update korle PUT method baki properties gulote value null ashbe
+![patch](/public/img/put.png)
+###### Complete update
+![patch](/public/img/put2.png)
+###### Delete
+![patch](/public/img/delete.png)
+
+
