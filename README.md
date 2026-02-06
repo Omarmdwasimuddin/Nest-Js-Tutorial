@@ -1439,3 +1439,67 @@ export class StudentsController {
 ![output view](/public/img/outputmongo.png)
 ###### mongodb insert data
 ![output view](/public/img/mongodb.png)
+
+## Topic 17: Get Data from MongoDB using find() & findById()
+
+```bash
+# students.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Student, StudentDocument } from './students.schema';
+import { Model } from 'mongoose';
+
+@Injectable()
+export class StudentsService {
+    constructor(
+        @InjectModel(Student.name) private studentModel: Model<StudentDocument>
+    ) {}
+
+    async createStudent(data: Partial<Student>): Promise<Student> {
+        const newStudent = new this.studentModel(data);
+        return newStudent.save();
+    }
+
+    async getAllStudents(): Promise<Student[]> {
+        return this.studentModel.find().exec();
+    }
+
+    async getStudentById(id: string): Promise<Student | null> {
+        return this.studentModel.findById(id).exec();
+    }
+
+}
+```
+---
+
+```bash
+# students.controller.ts
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { StudentsService } from './students.service';
+import { Student } from './students.schema';
+
+@Controller('students')
+export class StudentsController {
+    constructor(private readonly studentsService: StudentsService) {}
+
+    @Post()
+    async createStudent(@Body() data: Partial<Student>) {
+        return this.studentsService.createStudent(data);
+    }
+
+    @Get()
+    async getAllStudents() {
+        return this.studentsService.getAllStudents();
+    }
+
+    @Get(':id')
+    async getStudentById(@Param('id') id: string) {
+        return this.studentsService.getStudentById(id);
+    }
+}
+```
+---
+
+![read allStudent](/public/img/allstudentoutput.png)
+###### search by id
+![search by id](/public/img/searchId.png)
