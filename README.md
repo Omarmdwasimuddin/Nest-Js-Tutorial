@@ -1301,7 +1301,7 @@ $ npm i @nestjs/mongoose mongoose
 ```
 ---
 
-###### Note: app.module.ts file e add koro- import { MongooseModule } from '@nestjs/mongoose';   &   imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGO_URL!)],
+###### Note: app.module.ts file e add koro- import { MongooseModule } from '@nestjs/mongoose';   &   imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGO_URL!)],  also note: app.module.ts file dekhe korte hobe github e .env er properties onno file thekeo hide kore dey!!!
 
 ```bash
 # app.module.ts
@@ -1339,3 +1339,103 @@ export class AppModule implements NestModule {
 ```
 ---
 ###### npm run start:dev dile jodi error ashe tahole mongodb connect hoinai ar na ashle thikache.
+
+
+## Topic 16: How to Create & Register Schema with Mongoose
+
+```bash
+# create module
+$ nest g module students
+```
+---
+###### manualy file banao students.schema.ts
+![students folder](/public/img/studentsfolder.png)
+
+```bash
+# students.schema.ts
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
+
+export type StudentDocument = Student & Document;
+
+@Schema( { timestamps: true } )
+export class Student {
+    @Prop( { required: true } )
+    name: string;
+    
+    @Prop( { required: true } )
+    age: number;
+
+    @Prop()
+    email?: string;
+}
+
+export const StudentSchema = SchemaFactory.createForClass( Student );
+```
+---
+
+```bash
+# students.module.ts
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Student, StudentSchema } from './students.schema';
+
+@Module({
+    imports: [MongooseModule.forFeature([{ name: Student.name, schema: StudentSchema }])]
+})
+export class StudentsModule {
+
+}
+```
+---
+
+```bash
+# create service
+$ nest g service students
+# create controller
+$ nest g controller students
+```
+---
+
+```bash
+# students.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Student, StudentDocument } from './students.schema';
+import { Model } from 'mongoose';
+
+@Injectable()
+export class StudentsService {
+    constructor(
+        @InjectModel(Student.name) private studentModel: Model<StudentDocument>
+    ) {}
+
+    async createStudent(data: Partial<Student>): Promise<Student> {
+        const newStudent = new this.studentModel(data);
+        return newStudent.save();
+    }
+}
+```
+---
+
+```bash
+# students.controller.ts
+import { Body, Controller, Post } from '@nestjs/common';
+import { StudentsService } from './students.service';
+import { Student } from './students.schema';
+
+@Controller('students')
+export class StudentsController {
+    constructor(private readonly studentsService: StudentsService) {}
+
+    @Post()
+    async createStudent(@Body() data: Partial<Student>) {
+        return this.studentsService.createStudent(data);
+    }
+}
+```
+---
+###### postman
+![output view](/public/img/outputmongo.png)
+###### mongodb insert data
+![output view](/public/img/mongodb.png)
