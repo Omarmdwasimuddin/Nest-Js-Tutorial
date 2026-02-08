@@ -1686,3 +1686,130 @@ export class StudentsController {
 ![patch](/public/img/delete.png)
 
 
+## Topic 20: One-to-One Relationship using Embedding in MongoDB
+
+```bash
+# create module
+$ nest g module users
+# create service
+$ nest g service users
+# create controller
+$ nest g controller users
+```
+---
+
+###### manually toiry koro- schemas/address.schema.ts   o  schema/user.schema.ts
+![schemas folder](/public/img/schemasfolder.png)
+
+```bash
+# address.schema.ts
+import { Prop, Schema } from "@nestjs/mongoose";
+
+@Schema()
+export class Address {
+  @Prop()
+  street: string;
+
+  @Prop()
+  city: string;
+}
+```
+---
+
+```bash
+# user.schema.ts
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
+import { Address } from "./address.schema";
+
+
+@Schema()
+export class User extends Document {
+  @Prop()
+  name: string;
+
+  @Prop( { type: Address } )
+  address: Address;
+
+}
+export const UserSchema = SchemaFactory.createForClass(User);
+```
+---
+###### user.module.ts e import koro- MongooseModule 
+```bash
+# users.module.ts
+import { Module } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from './schemas/user.schema';
+
+@Module({
+  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  providers: [UsersService],
+  controllers: [UsersController]
+})
+export class UsersModule {}
+```
+---
+
+```bash
+# users.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from './schemas/user.schema';
+import { Model } from 'mongoose';
+
+@Injectable()
+export class UsersService {
+    constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+
+    async createUser(): Promise<User> {
+        const user = new this.userModel({
+            name: 'John Doe',
+            address: {
+                street: '123 Main St',
+                city: 'Anytown'
+            }
+        });
+        return user.save();
+    }
+
+    async getUsers(): Promise<User[]> {
+        return this.userModel.find().exec();
+    }
+}
+```
+---
+
+```bash
+# users.controller.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from './schemas/user.schema';
+import { Model } from 'mongoose';
+
+@Injectable()
+export class UsersService {
+    constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+
+    async createUser(): Promise<User> {
+        const user = new this.userModel({
+            name: 'John Doe',
+            address: {
+                street: '123 Main St',
+                city: 'Anytown'
+            }
+        });
+        return user.save();
+    }
+
+    async getUsers(): Promise<User[]> {
+        return this.userModel.find().exec();
+    }
+}
+```
+---
+![post](/public/img/userspost.png)
+![get](/public/img/usersget.png)
+![mongoose](/public/img/mongoose.png)
