@@ -2078,3 +2078,154 @@ export class ProductsController {
 ![post](/public/img/productspost.png)
 ![get](/public/img/productsget.png)
 ![products mongoose](/public/img/productsmongoose.png)
+
+
+## Topic 23: One-to-Many Relationship using Referencing in MongoDB
+
+
+```bash
+# create-
+$ nest g module library
+$ nest g service library
+$ nest g controller library
+```
+---
+
+###### create file folder- schemas/library.schema.ts & schemas/book.schema.ts
+
+```bash
+# book.schema.ts
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
+
+
+@Schema()
+export class Book extends Document {
+    @Prop()
+    title: string;
+
+    @Prop()
+    author: string;
+}
+
+export const BookSchema = SchemaFactory.createForClass(Book);
+```
+---
+
+```bash
+# library.schema.ts
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
+import { Book } from "./book.schema";
+
+
+
+@Schema()
+export class Library extends Document {
+    @Prop()
+    name: string;
+
+    @Prop( {
+        type: [{ type: Types.ObjectId, ref: Book.name}],
+    } )
+    books: Types.ObjectId[];
+}
+
+export const LibrarySchema = SchemaFactory.createForClass(Library);
+```
+---
+
+```bash
+# library.module.ts
+import { Module } from '@nestjs/common';
+import { LibraryService } from './library.service';
+import { LibraryController } from './library.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Library, LibrarySchema } from './schemas/library.schema';
+import { Book, BookSchema } from './schemas/book.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Library.name, schema: LibrarySchema },
+      { name: Book.name, schema: BookSchema }
+    ])
+  ],
+  providers: [LibraryService],
+  controllers: [LibraryController]
+})
+export class LibraryModule {}
+```
+---
+
+```bash
+# library.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Book } from './schemas/book.schema';
+import { Model } from 'mongoose';
+import { Library } from './schemas/library.schema';
+
+@Injectable()
+export class LibraryService {
+    constructor(
+        @InjectModel(Book.name) private bookModel: Model<Book>,
+        @InjectModel(Library.name) private libraryModel: Model<Library>
+    ) {}
+
+    async createLibrary(): Promise<Library> {
+
+        const book1 = await this.bookModel.create({ 
+            title: 'JS Library', 
+            author: 'Hamid' 
+        });
+        const book2 = await this.bookModel.create({
+             title: 'HTML Library', 
+             author: 'Rafiq' 
+            });
+        const book3 = await this.bookModel.create({
+             title: 'CSS Library', 
+             author: 'Manna' 
+            });
+
+        const library = new this.libraryModel({
+             name: 'Central Library', 
+             books: [book1._id, book2._id, book3._id] 
+            });
+        return library.save();
+    }
+
+    async getLibrary(): Promise<Library[]> {
+        return this.libraryModel.find().populate('books').exec();
+    }
+}
+```
+---
+
+```bash
+# library.controller.ts
+import { Controller, Get, Post } from '@nestjs/common';
+import { LibraryService } from './library.service';
+
+@Controller('library')
+export class LibraryController {
+    constructor(private readonly libraryService: LibraryService) {}
+
+    @Post()
+    createLibrary() {
+        return this.libraryService.createLibrary();
+    }
+
+    @Get()
+    getLibrary() {
+        return this.libraryService.getLibrary();
+    }
+}
+```
+---
+
+![post](/public/img/librarypost.png)
+![post](/public/img/libraryget.png)
+
+
+ 
