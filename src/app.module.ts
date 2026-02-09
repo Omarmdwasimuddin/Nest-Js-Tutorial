@@ -23,9 +23,10 @@ import { UsersModule } from './users/users.module';
 import { StaffModule } from './staff/staff.module';
 import { ProductsModule } from './products/products.module';
 import { LibraryModule } from './library/library.module';
+import { ProjectModule } from './project/project.module';
 
 @Module({
-  imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGO_URL!), StudentsModule, UsersModule, StaffModule, ProductsModule, LibraryModule],
+  imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGO_URL!), StudentsModule, UsersModule, StaffModule, ProductsModule, LibraryModule, ProjectModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController, EvController],
   providers: [AppService, ProductService, DatabaseService, EvService],
 })
