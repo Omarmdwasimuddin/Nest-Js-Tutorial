@@ -2383,3 +2383,127 @@ export class ProjectController {
 ![](/public/img/projectpost.png)
 ![](/public/img/projectget.png)
 ![](/public/img/projectget2.png)
+
+
+## Topic 25: Connect Supabase PostgreSQL with NestJS
+
+###### supabase dashboard theke New project create koro & database ke project er shathe connect koro. session pooler theke url connect koro.
+
+![session pooler](/public/img/Sessionpooler.png)
+![connect pooler](/public/img/connectionpooler.png)
+
+```bash
+# .env
+DATABASE_URL=postgresql://postgres.tpawbhcettriiskwfjwl:q5Ml5Z4fMLqnsgzT@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+```
+---
+
+```bash
+# install for env configuration
+$ npm i @nestjs/config
+# install postgreesql
+$ npm install @nestjs/typeorm typeorm pg
+```
+---
+
+```bash
+# create module,
+$ nest g module user-bd
+```
+---
+
+###### user.entity.ts file create koro.
+
+```bash
+# user.entity.ts
+import {  Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
+export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+    @Column()
+    name: string;
+}
+```
+---
+
+```bash
+# user-bd.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './user.entity';
+
+@Module({
+    imports: [ TypeOrmModule.forFeature([User]) ],
+})
+export class UserBdModule {}
+```
+---
+
+###### app.module.ts file e add koro- ConfigModule.forRoot(), TypeOrmModule.forRoot({ type: 'postgres', url: process.env.DATABASE_URL, autoLoadEntities: true, synchronize: true, }),
+
+```bash
+# app.module.ts 
+# ekhane ager project er module o add ache tai ei code ato boro
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserController } from './user/user.controller';
+import { ProductService } from './product/product.service';
+import { ProductController } from './product/product.controller';
+import { EmployeeModule } from './employee/employee.module';
+import { CategoryModule } from './category/category.module';
+import { StudentModule } from './student/student.module';
+import { CustomerModule } from './customer/customer.module';
+import { MynameController } from './myname/myname.controller';
+import { UserRolesController } from './user-roles/user-roles.controller';
+import { ExceptionController } from './exception/exception.controller';
+import { LoggerMiddleware } from './middleware/logger/logger.middleware';
+import { DatabaseService } from './database/database.service';
+import { DatabaseController } from './database/database.controller';
+import { ConfigModule } from '@nestjs/config';
+import { EvService } from './ev/ev.service';
+import { EvController } from './ev/ev.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { StudentsModule } from './students/students.module';
+import { UsersModule } from './users/users.module';
+import { StaffModule } from './staff/staff.module';
+import { ProductsModule } from './products/products.module';
+import { LibraryModule } from './library/library.module';
+import { ProjectModule } from './project/project.module';
+import { UserBdModule } from './user-bd/user-bd.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+@Module({
+  imports: [ ConfigModule.forRoot(), TypeOrmModule.forRoot({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+    autoLoadEntities: true,
+    synchronize: true,
+  }), UserBdModule],
+  controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController, EvController],
+  providers: [AppService, ProductService, DatabaseService, EvService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  } 
+}
+```
+---
+
+## Topic 26:  Insert Data into Supabase PostgreSQL
+
+```bash
+#
+
+```
+---
+
+```bash
+#
+
+```
+---

@@ -24,9 +24,16 @@ import { StaffModule } from './staff/staff.module';
 import { ProductsModule } from './products/products.module';
 import { LibraryModule } from './library/library.module';
 import { ProjectModule } from './project/project.module';
+import { UserBdModule } from './user-bd/user-bd.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [EmployeeModule, CategoryModule, StudentModule, CustomerModule, ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGO_URL!), StudentsModule, UsersModule, StaffModule, ProductsModule, LibraryModule, ProjectModule],
+  imports: [ ConfigModule.forRoot(), TypeOrmModule.forRoot({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+    autoLoadEntities: true,
+    synchronize: true,
+  }), UserBdModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController, EvController],
   providers: [AppService, ProductService, DatabaseService, EvService],
 })
