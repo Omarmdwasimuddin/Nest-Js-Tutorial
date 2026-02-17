@@ -26,6 +26,7 @@ import { LibraryModule } from './library/library.module';
 import { ProjectModule } from './project/project.module';
 import { UserBdModule } from './user-bd/user-bd.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmployeeBdModule } from './employee-bd/employee-bd.module';
 
 @Module({
   imports: [ ConfigModule.forRoot(), TypeOrmModule.forRoot({
@@ -33,7 +34,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: true,
-  }), UserBdModule],
+  }), UserBdModule, EmployeeBdModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController, EvController],
   providers: [AppService, ProductService, DatabaseService, EvService],
 })

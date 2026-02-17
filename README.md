@@ -2497,13 +2497,94 @@ export class AppModule implements NestModule {
 ## Topic 26:  Insert Data into Supabase PostgreSQL
 
 ```bash
-#
+# create-
+$ nest g module employee-bd
+$ nest g service employee-bd
+$ nest g controller employee-bd
+```
+---
+###### file add koro- employees.entity.ts
+```bash
+# employees.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
+
+@Entity()
+export class Employee {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    name: string;
+
+    @Column()
+    position: string;
+
+    @Column()
+    department: string;
+
+    @Column()
+    salary: number;
+}
 ```
 ---
 
 ```bash
-#
+# employee-bd.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { Repository } from 'typeorm';
 
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+}
 ```
 ---
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Post } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+}
+```
+---
+###### Note: add- imports: [TypeOrmModule.forFeature([Employee])],
+
+```bash
+# employee-bd.module.ts
+import { Module } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { EmployeeBdController } from './employee-bd.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Employee])],
+  providers: [EmployeeBdService],
+  controllers: [EmployeeBdController]
+})
+export class EmployeeBdModule {}
+```
+---
+###### Output view
+![](/public/img/employeebdpostman.png)
+![](/public/img/employeebdsupabase.png)
