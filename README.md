@@ -2588,3 +2588,72 @@ export class EmployeeBdModule {}
 ###### Output view
 ![](/public/img/employeebdpostman.png)
 ![](/public/img/employeebdsupabase.png)
+
+
+## Topic 27: Fetch Data from Supabase PostgreSQL
+
+```bash
+# employee-bd.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { Repository } from 'typeorm';
+
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+
+    async findAll(): Promise<Employee[]> {
+        return this.employeeRepository.find();
+    }
+
+    async findOne(id: number): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return employee;
+    }
+
+}
+```
+---
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+}
+```
+---
+
+![](/public/img/findAll.png)
+![](/public/img/findById.png)
