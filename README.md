@@ -2657,3 +2657,348 @@ export class EmployeeBdController {
 
 ![](/public/img/findAll.png)
 ![](/public/img/findById.png)
+
+## Topic Extra: search-by name, keyword, partial keyword
+
+```bash
+# employee-bd.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { ILike, Like, Repository } from 'typeorm';
+
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+
+    async findAll(): Promise<Employee[]> {
+        return this.employeeRepository.find();
+    }
+
+    async findOne(id: number): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return employee;
+    }
+
+    async findByName(name: string): Promise<Employee[]> {
+        const employee = await this.employeeRepository.find({
+            where: { name },
+        });
+        if (!employee.length) {
+            throw new NotFoundException(`Employee with name ${name} not found`);
+        }
+        return employee;
+    }
+
+    // Like is case-sensitive, ILike is case-insensitive
+    async searchByName(keyword: string): Promise<Employee[]> {
+        return this.employeeRepository.find({
+            where: {
+                //name: Like(`%${keyword}%`)
+                name: ILike(`%${keyword}%`)
+            }
+        });
+    }
+
+}
+```
+---
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    // find by id
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+    // find by name
+    @Get('name/:name')
+    async findEmployeeByName(@Param('name') name: string): Promise<Employee[]> {
+        return this.employeeBdService.findByName(name);
+    }
+
+    // search by name (partial match)
+    @Get(`search/:keyword`)
+    async searchEmployeeByName(@Param('keyword') keyword: string): Promise<Employee[]> {
+        return this.employeeBdService.searchByName(keyword);
+    }
+
+}
+```
+---
+![](/public/img/findbyname.png)
+![](/public/img/searchByKeyword.png)
+
+## Topic 28: Update Data in Supabase PostgreSQL
+
+```bash
+# employee-bd.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { ILike, Like, Repository } from 'typeorm';
+
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+
+    async findAll(): Promise<Employee[]> {
+        return this.employeeRepository.find();
+    }
+
+    async findOne(id: number): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return employee;
+    }
+
+    async findByName(name: string): Promise<Employee[]> {
+        const employee = await this.employeeRepository.find({
+            where: { name },
+        });
+        if (!employee.length) {
+            throw new NotFoundException(`Employee with name ${name} not found`);
+        }
+        return employee;
+    }
+
+    // Like is case-sensitive, ILike is case-insensitive
+    async searchByName(keyword: string): Promise<Employee[]> {
+        return this.employeeRepository.find({
+            where: {
+                //name: Like(`%${keyword}%`)
+                name: ILike(`%${keyword}%`)
+            }
+        });
+    }
+
+    async update(id: number, updateData: Partial<Employee>): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        const updatedEmployee = Object.assign(employee,  updateData);
+        return this.employeeRepository.save(updatedEmployee);
+    }
+
+}
+```
+---
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    // find by id
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+    // find by name
+    @Get('name/:name')
+    async findEmployeeByName(@Param('name') name: string): Promise<Employee[]> {
+        return this.employeeBdService.findByName(name);
+    }
+
+    // search by name (partial match)
+    @Get(`search/:keyword`)
+    async searchEmployeeByName(@Param('keyword') keyword: string): Promise<Employee[]> {
+        return this.employeeBdService.searchByName(keyword);
+    }
+
+    @Put(':id')
+    async updateEmployee(
+        @Param('id') id: number, 
+        @Body() updateData: Partial<Employee>): Promise<Employee> {
+        return this.employeeBdService.update(id, updateData);
+    }
+
+}
+```
+---
+
+![](/public/img/update.png)
+
+## Topic 29: Delete Data from Supabase PostgreSQL Database
+
+```bash
+# employee-bd.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { ILike, Like, Repository } from 'typeorm';
+
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+
+    async findAll(): Promise<Employee[]> {
+        return this.employeeRepository.find();
+    }
+
+    async findOne(id: number): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return employee;
+    }
+
+    async findByName(name: string): Promise<Employee[]> {
+        const employee = await this.employeeRepository.find({
+            where: { name },
+        });
+        if (!employee.length) {
+            throw new NotFoundException(`Employee with name ${name} not found`);
+        }
+        return employee;
+    }
+
+    // Like is case-sensitive, ILike is case-insensitive
+    async searchByName(keyword: string): Promise<Employee[]> {
+        return this.employeeRepository.find({
+            where: {
+                //name: Like(`%${keyword}%`)
+                name: ILike(`%${keyword}%`)
+            }
+        });
+    }
+
+    async update(id: number, updateData: Partial<Employee>): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        const updatedEmployee = Object.assign(employee,  updateData);
+        return this.employeeRepository.save(updatedEmployee);
+    }
+
+    async delete(id: number): Promise<{ message: string }> {
+        const result = await this.employeeRepository.delete({ id });
+        if (result.affected === 0) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return { message: `Employee with ID ${id} deleted successfully` };
+    }
+
+}
+```
+---
+
+```bash
+# employee-bd.service.ts
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    // find by id
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+    // find by name
+    @Get('name/:name')
+    async findEmployeeByName(@Param('name') name: string): Promise<Employee[]> {
+        return this.employeeBdService.findByName(name);
+    }
+
+    // search by name (partial match)
+    @Get(`search/:keyword`)
+    async searchEmployeeByName(@Param('keyword') keyword: string): Promise<Employee[]> {
+        return this.employeeBdService.searchByName(keyword);
+    }
+
+    @Put(':id')
+    async updateEmployee(
+        @Param('id') id: number, 
+        @Body() updateData: Partial<Employee>): Promise<Employee> {
+        return this.employeeBdService.update(id, updateData);
+    }
+
+    @Delete(':id')
+    async deleteEmployee(@Param('id') id: number): Promise<{ message: string }> {
+        return this.employeeBdService.delete(id);
+    }
+
+}
+```
+---
+
+![](/public/img/delete-employee.png)
