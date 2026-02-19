@@ -3002,3 +3002,349 @@ export class EmployeeBdController {
 ---
 
 ![](/public/img/delete-employee.png)
+
+
+## Topic 30: Filter & Search Data Using @Query()
+
+```bash
+# employee-bd.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from './employees.entity';
+import { ILike, Like, Repository } from 'typeorm';
+
+@Injectable()
+export class EmployeeBdService {
+    constructor(
+        @InjectRepository(Employee) private employeeRepository: Repository<Employee>,
+    ) {}
+
+    async create(employeeData: Partial<Employee>): Promise<Employee> {
+        const employee = this.employeeRepository.create(employeeData);
+        return this.employeeRepository.save(employee);
+    }
+
+    async findAll(): Promise<Employee[]> {
+        return this.employeeRepository.find();
+    }
+
+    async findOne(id: number): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return employee;
+    }
+
+    async findByName(name: string): Promise<Employee[]> {
+        const employee = await this.employeeRepository.find({
+            where: { name },
+        });
+        if (!employee.length) {
+            throw new NotFoundException(`Employee with name ${name} not found`);
+        }
+        return employee;
+    }
+
+    // Like is case-sensitive, ILike is case-insensitive
+    async searchByName(keyword: string): Promise<Employee[]> {
+        return this.employeeRepository.find({
+            where: {
+                //name: Like(`%${keyword}%`)
+                name: ILike(`%${keyword}%`)
+            }
+        });
+    }
+
+    async update(id: number, updateData: Partial<Employee>): Promise<Employee> {
+        const employee = await this.employeeRepository.findOneBy({ id });
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        const updatedEmployee = Object.assign(employee,  updateData);
+        return this.employeeRepository.save(updatedEmployee);
+    }
+
+    async delete(id: number): Promise<{ message: string }> {
+        const result = await this.employeeRepository.delete({ id });
+        if (result.affected === 0) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        return { message: `Employee with ID ${id} deleted successfully` };
+    }
+
+    async search(filters: { name?: string; department?: string }): Promise<Employee[]> {
+        const query = this.employeeRepository.createQueryBuilder('employee');
+
+        if (filters.name) {
+            query.andWhere('employee.name ILIKE :name', { name: `%${filters.name}%`});
+        }
+        if (filters.department){
+            query.andWhere(`employee.department ILIKE :department`, { department: `%${filters.department}%`});
+        }
+        return query.getMany();
+    }
+
+}
+```
+---
+
+###### Note: Get method er modhe id er agei filter dite hobe na hole filter kaj korbe na. code ta dekhle clear hoye jabe
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    @Get('filter')
+    async filterEmployees(
+        @Query('name') name?: string,
+        @Query('department') department?: string,
+    ): Promise<Employee[]> {
+        return this.employeeBdService.search({ name, department });
+    }
+
+    // find by id
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+    // find by name
+    @Get('name/:name')
+    async findEmployeeByName(@Param('name') name: string): Promise<Employee[]> {
+        return this.employeeBdService.findByName(name);
+    }
+
+    // search by name (partial match)
+    @Get(`search/:keyword`)
+    async searchEmployeeByName(@Param('keyword') keyword: string): Promise<Employee[]> {
+        return this.employeeBdService.searchByName(keyword);
+    }
+
+    @Put(':id')
+    async updateEmployee(
+        @Param('id') id: number, 
+        @Body() updateData: Partial<Employee>): Promise<Employee> {
+        return this.employeeBdService.update(id, updateData);
+    }
+
+    @Delete(':id')
+    async deleteEmployee(@Param('id') id: number): Promise<{ message: string }> {
+        return this.employeeBdService.delete(id);
+    }
+
+}
+```
+---
+
+![](/public/img/filter.png)
+
+## Topic 31: Supabase JWT Authentication with Login API
+
+```bash
+# Install-
+$ npm i jsonwebtoken
+```
+---
+###### Note: project settings theke JWT Keys theke Legacy JWT Secret keys Reveal kore copy koro
+![](/public/img/projectsettings.png)
+![](/public/img/copyjwt.png)
+
+```bash
+# .env
+DATABASE_URL=postgresql://postgres.tpawbhcettriiskwfjwl:q5Ml5Z4fMLqnsgzT@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+SUPABASE_JWT_SECRET=T+sfZYNnyCfjlXvUwS9gh2FD/l/fZjYqDNi79DnbWwdWdLvPFmLE0W7Jt0PJ9v2YhO7mpobrxm0Ti1Klhyr6MA==
+```
+---
+###### Note: add koro- ConfigModule.forRoot({isGlobal: true,}) 
+
+```bash
+# app.module.ts
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserController } from './user/user.controller';
+import { ProductService } from './product/product.service';
+import { ProductController } from './product/product.controller';
+import { MynameController } from './myname/myname.controller';
+import { UserRolesController } from './user-roles/user-roles.controller';
+import { ExceptionController } from './exception/exception.controller';
+import { LoggerMiddleware } from './middleware/logger/logger.middleware';
+import { DatabaseService } from './database/database.service';
+import { DatabaseController } from './database/database.controller';
+import { ConfigModule } from '@nestjs/config';
+import { UserBdModule } from './user-bd/user-bd.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmployeeBdModule } from './employee-bd/employee-bd.module';
+
+@Module({
+  imports: [ ConfigModule.forRoot({
+    isGlobal: true,
+  }), TypeOrmModule.forRoot({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+    autoLoadEntities: true,
+    synchronize: true,
+  }), UserBdModule, EmployeeBdModule],
+  controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController ],
+  providers: [AppService, ProductService, DatabaseService],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  } 
+}
+```
+---
+
+```bash
+# create-
+$ nest g guard auth/supabase-auth
+```
+---
+
+```bash
+# supabase-auth.guard.ts
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import * as jwt from 'jsonwebtoken';
+import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+
+
+@Injectable()
+export class SupabaseAuthGuard implements CanActivate {
+
+  constructor(
+    private configService: ConfigService
+  ) {}
+
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
+    const authHeader = request.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('No token provided');
+    }
+    const token = authHeader.split(' ')[1];
+    const jwtSecret = this.configService.get<string>('SUPABASE_JWT_SECRET');
+    if (!jwtSecret) {
+      throw new UnauthorizedException('JWT secret not configured');
+    }
+    try {
+     const decode = jwt.verify(token, jwtSecret);
+     request['user'] = decode; // Attach decoded token to request object
+     return true;
+    }
+    catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+}
+```
+---
+
+###### add- @UseGuards(SupabaseAuthGuard)
+
+```bash
+# employee-bd.controller.ts
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { EmployeeBdService } from './employee-bd.service';
+import { Employee } from './employees.entity';
+import { SupabaseAuthGuard } from 'src/auth/supabase-auth/supabase-auth.guard';
+
+@Controller('employee-bd')
+export class EmployeeBdController {
+    constructor(private readonly employeeBdService: EmployeeBdService) {}
+
+    @Post()
+    async createEmployee(@Body() employeeData: Partial<Employee>) {
+        return this.employeeBdService.create(employeeData);
+    }
+
+    @UseGuards(SupabaseAuthGuard)
+    @Get()
+    async findAllEmployees(): Promise<Employee[]> {
+        return this.employeeBdService.findAll();
+    }
+
+    @Get('filter')
+    async filterEmployees(
+        @Query('name') name?: string,
+        @Query('department') department?: string,
+    ): Promise<Employee[]> {
+        return this.employeeBdService.search({ name, department });
+    }
+
+    // find by id
+    @Get(':id')
+    async findEmployeeById(@Param('id') id: number): Promise<Employee> {
+        return this.employeeBdService.findOne(id);
+    }
+
+    // find by name
+    @Get('name/:name')
+    async findEmployeeByName(@Param('name') name: string): Promise<Employee[]> {
+        return this.employeeBdService.findByName(name);
+    }
+
+    // search by name (partial match)
+    @Get(`search/:keyword`)
+    async searchEmployeeByName(@Param('keyword') keyword: string): Promise<Employee[]> {
+        return this.employeeBdService.searchByName(keyword);
+    }
+
+    @Put(':id')
+    async updateEmployee(
+        @Param('id') id: number, 
+        @Body() updateData: Partial<Employee>): Promise<Employee> {
+        return this.employeeBdService.update(id, updateData);
+    }
+
+    @Delete(':id')
+    async deleteEmployee(@Param('id') id: number): Promise<{ message: string }> {
+        return this.employeeBdService.delete(id);
+    }
+
+}
+```
+---
+###### click authentication
+![](/public/img/authentication.png)
+###### click create new user
+![](/public/img/createnewuser.png)
+###### create new user
+![](/public/img/createuser.png)
+###### created
+![](/public/img/created.png)
+###### copy project ID
+![](/public/img/projectID.png)
+###### postman e project id url e boshao
+![](/public/img/projectidfromUrl.png)
+###### url e add koro- .supabase.co/auth/v1/token?grant_type=password   abong Body daw
+![](/public/img/body.png)
+###### api key copy koro-
+![](/public/img/apikey.png)
+###### Headers e apikey ar Content-Type daw
+![](/public/img/header.png)
+###### Send click koro-
+![](/public/img/Send.png)
+###### Authorization e Bearer(space diye) token add koro- then Send click koro-
+![](/public/img/authorization.png)
