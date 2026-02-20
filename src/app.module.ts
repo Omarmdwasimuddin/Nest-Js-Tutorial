@@ -14,6 +14,9 @@ import { ConfigModule } from '@nestjs/config';
 import { UserBdModule } from './user-bd/user-bd.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmployeeBdModule } from './employee-bd/employee-bd.module';
+import { AuthModule } from './auth/auth.module';
+import { MongooseModule } from '@nestjs/mongoose';
+
 
 @Module({
   imports: [ ConfigModule.forRoot({
@@ -23,7 +26,7 @@ import { EmployeeBdModule } from './employee-bd/employee-bd.module';
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: true,
-  }), UserBdModule, EmployeeBdModule],
+  }), MongooseModule.forRoot(process.env.MONGO_URL!), UserBdModule, EmployeeBdModule, AuthModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController ],
   providers: [AppService, ProductService, DatabaseService],
 })
