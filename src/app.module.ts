@@ -16,17 +16,24 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmployeeBdModule } from './employee-bd/employee-bd.module';
 import { AuthModule } from './auth/auth.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { BookModule } from './book/book.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'path';
 
 
 @Module({
-  imports: [ ConfigModule.forRoot({
-    isGlobal: true,
+  imports: [ ConfigModule.forRoot({isGlobal: true,}), GraphQLModule.forRoot<ApolloDriverConfig>({
+    driver: ApolloDriver,
+    autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+    sortSchema: true,
+    playground: true,
   }), TypeOrmModule.forRoot({
     type: 'postgres',
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: true,
-  }), MongooseModule.forRoot(process.env.MONGO_URL!), UserBdModule, EmployeeBdModule, AuthModule],
+  }), MongooseModule.forRoot(process.env.MONGO_URL!), UserBdModule, EmployeeBdModule, AuthModule, BookModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController ],
   providers: [AppService, ProductService, DatabaseService],
 })
