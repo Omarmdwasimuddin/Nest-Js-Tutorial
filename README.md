@@ -3571,7 +3571,7 @@ export class AppModule implements NestModule {
 
 ```bash
 # install
-$ npm i @nestjs/apollo @nestjs/graphql apollo-server-express class-transformer class-validator graphql
+$ npm i @nestjs/graphql @nestjs/apollo @apollo/server @as-integrations/express5 class-transformer class-validator graphql
 ```
 ---
 
@@ -3864,3 +3864,304 @@ mutation {
 ---
 
 ![](/public/img/graphql.png)
+
+
+## Topic 34: Build Full CRUD App with GraphQL, Prisma & Neon DB
+
+
+```bash
+# GraphQL installation
+$ npm i @nestjs/graphql @nestjs/apollo @apollo/server @as-integrations/express5 graphql
+```
+---
+
+```bash
+# Prisma Installation
+$ npm install prisma --save-dev
+$ npm install @prisma/client @prisma/adapter-pg pg
+$ npx prisma init
+```
+---
+
+##### Neon e project create koro and then database connect koro-
+![](/public/img/neondatabase.png)
+```bash
+# .env
+DATABASE_URL="postgresql://neondb_owner:npg_xFDa4wvps3Gq@ep-crimson-river-a1jhbuwa-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+```
+---
+
+```bash
+# schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model Book {
+  id String @id @default(uuid())
+  title String
+  author String
+  createdAt DateTime @default(now())
+}
+```
+---
+
+```bash
+# Create and run your migration & Generate Prisma Client
+$ npx prisma migrate dev --name init
+$ npx prisma generate
+```
+---
+![](/public/img/migrate.png)
+
+```bash
+# create- 
+$ nest g module prisma
+$ nest g service prisma
+$ nest g module books
+$ nest g service books
+$ nest g resolver books
+```
+---
+
+##### create koro- books/dto/create-book.input.ts, books/dto/update-book.input.ts & books/model/book.model.ts
+![](/public/img/dto&model.png)
+
+```bash
+# prisma.service.ts
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from 'generated/prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+    async onModuleInit() {
+        await this.$connect();
+    }
+
+    async onModuleDestroy() {
+        await this.$disconnect();
+    }
+}
+```
+---
+##### app.module.ts e add koro-
+![](/public/img/app.module.png)
+
+```bash
+# create-book.input.ts
+import { InputType, Field } from "@nestjs/graphql";
+@InputType()
+export class CreateBookInput {
+    @Field()
+    title: string;
+
+    @Field()
+    author: string;
+}
+```
+---
+
+```bash
+# update-book.input.ts
+import { InputType, Field, PartialType } from "@nestjs/graphql";
+import { CreateBookInput } from "./create-book.input";
+@InputType()
+export class UpdateBookInput extends PartialType(CreateBookInput) {
+    @Field()
+    id: string;
+}
+```
+---
+
+##### prisma.module.ts file e add koro- exports: [PrismaService],
+
+```bash
+# prisma.module.ts
+import { Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+```
+---
+##### books.module.ts e add koro- imports: [PrismaModule],
+```bash
+# books.module.ts
+import { Module } from '@nestjs/common';
+import { BooksService } from './books.service';
+import { BooksResolver } from './books.resolver';
+import { PrismaModule } from 'src/prisma/prisma.module';
+
+@Module({
+  imports: [PrismaModule],
+  providers: [BooksService, BooksResolver]
+})
+export class BooksModule {}
+```
+---
+
+```bash
+# book.model.ts
+import { ObjectType, Field } from "@nestjs/graphql";
+
+@ObjectType()
+export class Book {
+    @Field()
+    id: string;
+
+    @Field()
+    title: string;
+
+    @Field()
+    author: string;
+
+    @Field()
+    createdAt: Date;
+}
+```
+---
+
+```bash
+# books.service.ts
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateBookInput } from './dto/create-book.input';
+import { UpdateBookInput } from './dto/update-book.input';
+
+@Injectable()
+export class BooksService {
+    constructor(private prisma: PrismaService) {}
+
+    create(data: CreateBookInput) {
+        return this.prisma.book.create({ data });
+    }
+
+    findAll() {
+        return this.prisma.book.findMany();
+    }
+
+    findOne(id: string) {
+        return this.prisma.book.findUnique({
+            where: { id }
+        })
+    }
+
+    update(data: UpdateBookInput) {
+        return this.prisma.book.update({
+            where: { id: data.id },
+            data: {
+                title: data.title,
+                author: data.author
+            }
+        })
+    }
+
+    remove(id: string) {
+        return this.prisma.book.delete({
+            where: { id }
+        })
+    }
+}
+```
+---
+
+```bash
+# books.resolver.ts
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Book } from './model/book.model';
+import { BooksService } from './books.service';
+import { CreateBookInput } from './dto/create-book.input';
+import { UpdateBookInput } from './dto/update-book.input';
+
+@Resolver(() => Book)
+export class BooksResolver {
+    constructor(private readonly booksService: BooksService) {}
+
+    // Define your GraphQL queries and mutations here
+
+    @Query(() => [Book])
+    getAllBooks() {
+        return this.booksService.findAll();
+    }
+
+    @Query(() => Book)
+    getBookById(@Args('id')id: string) {
+        return this.booksService.findOne(id);
+    }
+
+    @Mutation(() => Book)
+    createBook(@Args('input') input: CreateBookInput) {
+        return this.booksService.create(input);
+    }
+
+    @Mutation(() => Book)
+    updateBook(@Args('input') input: UpdateBookInput) {
+        return this.booksService.update(input);
+    }
+
+    @Mutation(() => Book)
+    deleteBook(@Args('id') id: string) {
+        return this.booksService.remove(id);
+    }
+
+}
+```
+---
+
+```bash
+# localhost:3000/graphql
+# mutation{
+# createBook(input:{
+#     title: "PrismaORM for delete",
+#     author: "Wasim Uddin"
+#   }){
+#     id
+#     title
+#   }
+# }
+
+# query {
+#   getAllBooks {
+#     id
+#     title
+#     author
+#   }
+# }
+
+
+# mutation {
+#   updateBook(input:{
+#     id:"9ef7090b-28b3-40ff-89d7-0123d45ba639"
+#     title: "PrismaORM Updated",
+#     author: "Wasim Updated author"
+#   }){
+#     title
+#   }
+# }
+
+# mutation {
+#   deleteBook(id: "dd78234b-2241-4ce3-ab97-f670fce9096a"){
+#     title
+#   }
+# }
+
+query{
+  getBookById(id:"a36953c8-f6b1-46b5-bac1-34c0fc0ecfa5"){
+    title
+    author
+  }
+}
+```
+---
+
+![](/public/img/graphqlplayground.png)
+![](/public/img/neon.png)
