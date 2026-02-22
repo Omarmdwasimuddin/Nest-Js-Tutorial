@@ -21,6 +21,8 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { BooksModule } from './books/books.module';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -34,9 +36,18 @@ import { BooksModule } from './books/books.module';
     url: process.env.DATABASE_URL,
     autoLoadEntities: true,
     synchronize: true,
+  }), ThrottlerModule.forRoot({
+    throttlers: [
+      {
+      name: 'ShortTermThrottler',
+      ttl: seconds(60),
+      limit: 3,
+      }
+    ],
+    errorMessage: 'Too many requests, please try again later.',
   }), MongooseModule.forRoot(process.env.MONGO_URL!), UserBdModule, EmployeeBdModule, AuthModule, PrismaModule, BooksModule],
   controllers: [AppController, UserController, ProductController, MynameController, UserRolesController, ExceptionController, DatabaseController ],
-  providers: [AppService, ProductService, DatabaseService],
+  providers: [AppService, ProductService, DatabaseService, { provide: APP_GUARD, useClass: ThrottlerGuard}],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer){
